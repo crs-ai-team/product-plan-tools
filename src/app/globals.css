@@ -148,6 +148,19 @@
     font-weight: 600;
   }
 
+  /* select 沿用同一組欄位樣式，並換掉各平台差異很大的原生箭頭。 */
+  select.field-input {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    padding-right: 1.5rem;
+    background-image: linear-gradient(45deg, transparent 50%, rgb(var(--text-muted)) 50%),
+      linear-gradient(135deg, rgb(var(--text-muted)) 50%, transparent 50%);
+    background-position: calc(100% - 0.85rem) 55%, calc(100% - 0.55rem) 55%;
+    background-size: 0.3rem 0.3rem, 0.3rem 0.3rem;
+    background-repeat: no-repeat;
+  }
+
   /* 隱藏數字輸入框的上下箭頭，讓欄位在窄欄寬下仍然好按。 */
   .field-input[type='number']::-webkit-outer-spin-button,
   .field-input[type='number']::-webkit-inner-spin-button {
@@ -261,6 +274,15 @@
 
   .border-strong {
     border-color: rgb(var(--border-strong));
+  }
+
+  /* 黏性欄的內側陰影，讓捲到下方的內容看起來是被刻意遮住而不是破圖。 */
+  .sticky-edge-left {
+    box-shadow: 6px 0 10px -8px rgb(0 0 0 / 0.45);
+  }
+
+  .sticky-edge-right {
+    box-shadow: -6px 0 10px -8px rgb(0 0 0 / 0.45);
   }
 
   /* 產生結果時逐格淡入，讓「重新產生」有明確的視覺回饋。 */

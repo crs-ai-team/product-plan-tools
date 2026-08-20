@@ -3,8 +3,20 @@
 import { useState } from 'react'
 import { dailyTotals, projectTotals, type HoursMatrix } from '@/lib/generator'
 
+export interface TableColumn {
+  /** 欄位主標，例如「第1天」或月份模式的日期數字。 */
+  label: string
+  /** 欄位副標，例如星期幾。 */
+  sublabel?: string
+  /** 放假日：不排工時，整欄以灰階顯示。 */
+  offDay?: boolean
+  /** 滑鼠停留時的說明，例如節日名稱。 */
+  title?: string
+}
+
 interface ResultTableProps {
   matrix: HoursMatrix
+  columns: TableColumn[]
   projectNames: string[]
   maxPerProject: number
   minHours: number
@@ -32,6 +44,7 @@ function heatStyle(value: number, cap: number): React.CSSProperties {
 
 export function ResultTable({
   matrix,
+  columns,
   projectNames,
   maxPerProject,
   minHours,
@@ -43,9 +56,10 @@ export function ResultTable({
   const totalsByDay = dailyTotals(matrix)
   const totalsByProject = projectTotals(matrix)
   const grandTotal = totalsByDay.reduce((sum, value) => sum + value, 0)
-  const days = matrix[0]?.length ?? 0
 
-  const stickyCell = 'sticky left-0 z-10 surface-card'
+  // 首欄與合計欄固定在兩側，整月 31 欄橫向捲動時仍看得到專案名稱與總時數。
+  const stickyLeft = 'sticky left-0 z-10 sticky-edge-left'
+  const stickyRight = 'sticky right-0 z-10 sticky-edge-right'
 
   return (
     <div className="scroll-slim overflow-x-auto rounded-xl border border-subtle">
@@ -54,22 +68,28 @@ export function ResultTable({
           <tr className="surface-muted">
             <th
               scope="col"
-              className={`${stickyCell} surface-muted min-w-[9rem] border-b border-r border-subtle px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-muted`}
+              className={`${stickyLeft} surface-muted min-w-[9rem] border-b border-r border-subtle px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-muted`}
             >
               專案
             </th>
-            {Array.from({ length: days }, (_, day) => (
+            {columns.map((column, index) => (
               <th
-                key={day}
+                key={index}
                 scope="col"
-                className="min-w-[3.5rem] border-b border-subtle px-2 py-2.5 text-center text-xs font-bold text-muted"
+                title={column.title}
+                className={`min-w-[3.25rem] border-b border-subtle px-2 py-2 text-center text-xs font-bold ${
+                  column.offDay ? 'text-muted opacity-60' : 'text-muted'
+                }`}
               >
-                第{day + 1}天
+                <span className="block leading-tight">{column.label}</span>
+                {column.sublabel && (
+                  <span className="block text-[10px] font-medium leading-tight opacity-70">{column.sublabel}</span>
+                )}
               </th>
             ))}
             <th
               scope="col"
-              className="min-w-[4rem] border-b border-l border-subtle px-3 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-muted"
+              className={`${stickyRight} surface-muted min-w-[4rem] border-b border-l border-subtle px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-muted`}
             >
               合計
             </th>
@@ -78,8 +98,11 @@ export function ResultTable({
 
         <tbody>
           {matrix.map((row, project) => (
-            <tr key={project} className="group">
-              <th scope="row" className={`${stickyCell} border-b border-r border-subtle px-3 py-1.5 text-left font-medium`}>
+            <tr key={project}>
+              <th
+                scope="row"
+                className={`${stickyLeft} surface-card border-b border-r border-subtle px-3 py-1.5 text-left font-medium`}
+              >
                 {editing === project ? (
                   <input
                     autoFocus
@@ -111,18 +134,24 @@ export function ResultTable({
                   // key 帶上 revision，重新產生時整格重新掛載，動畫才會重播。
                   key={`${revision}-${day}`}
                   className="cell-enter border-b border-subtle p-1"
-                  style={{ animationDelay: `${Math.min(320, (project * days + day) * 6)}ms` }}
+                  style={{ animationDelay: `${Math.min(320, (project * row.length + day) * 5)}ms` }}
                 >
-                  <span
-                    className="flex h-8 items-center justify-center rounded-md font-semibold"
-                    style={heatStyle(value, maxPerProject)}
-                  >
-                    {value}
-                  </span>
+                  {columns[day]?.offDay ? (
+                    <span className="flex h-8 items-center justify-center rounded-md surface-inset text-xs font-medium text-muted opacity-50">
+                      休
+                    </span>
+                  ) : (
+                    <span
+                      className="flex h-8 items-center justify-center rounded-md font-semibold"
+                      style={heatStyle(value, maxPerProject)}
+                    >
+                      {value}
+                    </span>
+                  )}
                 </td>
               ))}
 
-              <td className="border-b border-l border-subtle px-3 py-1.5 text-center font-bold text-accent">
+              <td className={`${stickyRight} surface-card border-b border-l border-subtle px-3 py-1.5 text-center font-bold text-accent`}>
                 {totalsByProject[project]}
               </td>
             </tr>
@@ -133,11 +162,18 @@ export function ResultTable({
           <tr className="surface-muted">
             <th
               scope="row"
-              className={`${stickyCell} surface-muted border-r border-subtle px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-muted`}
+              className={`${stickyLeft} surface-muted border-r border-subtle px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-muted`}
             >
               每日合計
             </th>
             {totalsByDay.map((total, day) => {
+              if (columns[day]?.offDay) {
+                return (
+                  <td key={day} className="px-2 py-2.5 text-center text-muted opacity-50">
+                    —
+                  </td>
+                )
+              }
               const outOfRange = total < minHours || total > maxHours
               return (
                 <td
@@ -149,7 +185,9 @@ export function ResultTable({
                 </td>
               )
             })}
-            <td className="border-l border-subtle px-3 py-2.5 text-center font-bold text-accent">{grandTotal}</td>
+            <td className={`${stickyRight} surface-muted border-l border-subtle px-3 py-2.5 text-center font-bold text-accent`}>
+              {grandTotal}
+            </td>
           </tr>
         </tfoot>
       </table>

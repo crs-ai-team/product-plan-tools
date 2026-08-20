@@ -109,6 +109,47 @@ export function toXlsx(data: SheetData): Uint8Array {
   ])
 }
 
+/**
+ * 只輸出資料格，用 tab 分隔，供直接貼進試算表。
+ *
+ * 不含表頭與專案名稱，貼上後正好蓋住原本的數字區塊。每一列都輸出所有日期欄，
+ * 欄數固定，貼上時不會錯位。工作日一律給數字（沒排到就是 0），假日欄輸出空字串，
+ * 貼上後那些格子維持空白，不會被塞進 0。
+ */
+export function toTsv(matrix: HoursMatrix, offDays: boolean[] = []): string {
+  return matrix
+    .map((row) => row.map((value, index) => (offDays[index] ? '' : String(value))).join('\t'))
+    .join('\n')
+}
+
+/**
+ * 複製文字到剪貼簿。
+ *
+ * 非 HTTPS 或使用者未授權時 navigator.clipboard 會失敗，
+ * 退回舊的 execCommand 作法，讓本機開發與內網環境也能用。
+ */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    try {
+      const area = document.createElement('textarea')
+      area.value = text
+      area.setAttribute('readonly', '')
+      area.style.position = 'fixed'
+      area.style.opacity = '0'
+      document.body.appendChild(area)
+      area.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(area)
+      return ok
+    } catch {
+      return false
+    }
+  }
+}
+
 export function download(filename: string, data: Uint8Array | string, mime: string): void {
   const blob = data instanceof Uint8Array
     ? new Blob([data.slice().buffer as ArrayBuffer], { type: mime })

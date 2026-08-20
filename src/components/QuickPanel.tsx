@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { download, toCsv, toXlsx, type SheetData } from '@/lib/export'
+import { copyText, download, toCsv, toTsv, toXlsx, type SheetData } from '@/lib/export'
 import { dailyTotals, generate, validate, type GeneratorOptions, type HoursMatrix } from '@/lib/generator'
 import { DEFAULT_OPTIONS, fromQuery, loadStored, saveStored, toQuery } from '@/lib/params'
 import { randomSeed } from '@/lib/rng'
@@ -21,7 +21,6 @@ export function QuickPanel({ projectNames, onRenameProject, onResetNames, notify
   const [options, setOptions] = useState<GeneratorOptions>(DEFAULT_OPTIONS)
   const [ready, setReady] = useState(false)
   const [matrix, setMatrix] = useState<HoursMatrix | null>(null)
-  const [revision, setRevision] = useState(0)
 
   const errors = useMemo(() => validate(options), [options])
 
@@ -37,7 +36,6 @@ export function QuickPanel({ projectNames, onRenameProject, onResetNames, notify
   useEffect(() => {
     if (!ready || errors.length > 0) return
     setMatrix(generate(options))
-    setRevision((value) => value + 1)
   }, [ready, options, errors])
 
   useEffect(() => {
@@ -60,6 +58,12 @@ export function QuickPanel({ projectNames, onRenameProject, onResetNames, notify
     setOptions({ ...DEFAULT_OPTIONS, seed: randomSeed() })
   }
 
+  const handleCopy = async () => {
+    if (!matrix) return
+    const ok = await copyText(toTsv(matrix))
+    notify(ok ? `已複製 ${matrix.length} × ${options.numDays} 的數字區塊，可直接貼進試算表` : '複製失敗，請改用 CSV 或 Excel 下載')
+  }
+
   const handleShare = async () => {
     const query = toQuery(options)
     const url = `${window.location.origin}${window.location.pathname}?${query}`
@@ -78,8 +82,8 @@ export function QuickPanel({ projectNames, onRenameProject, onResetNames, notify
   const grandTotal = totals.reduce((sum, value) => sum + value, 0)
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-      <aside className="lg:sticky lg:top-6 lg:self-start">
+    <div className="grid gap-3 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <aside className="lg:sticky lg:top-14 lg:self-start">
         <ControlPanel
           options={options}
           errors={errors}
@@ -93,14 +97,15 @@ export function QuickPanel({ projectNames, onRenameProject, onResetNames, notify
       <main className="min-w-0">
         <ResultCard
           title="分配結果"
-          subtitle="點專案名稱可改名 · 色塊越深代表投入越多"
+          note="點專案名稱可改名 · 底色越深代表投入越多"
           stats={[
             { label: '專案', value: options.numProjects },
             { label: '天數', value: options.numDays },
             { label: '總工時', value: grandTotal },
-            { label: '平均每日', value: totals.length > 0 ? (grandTotal / totals.length).toFixed(1) : '0.0' },
+            { label: '平均', value: totals.length > 0 ? (grandTotal / totals.length).toFixed(1) : '0.0' },
           ]}
           disabled={!matrix || errors.length > 0}
+          onCopy={handleCopy}
           onShare={handleShare}
           onCsv={() => download(`${filename}.csv`, toCsv(sheet()), 'text/csv;charset=utf-8')}
           onXlsx={() =>
@@ -119,11 +124,10 @@ export function QuickPanel({ projectNames, onRenameProject, onResetNames, notify
               maxPerProject={options.maxPerProject}
               minHours={options.minHours}
               maxHours={options.maxHours}
-              revision={revision}
               onRenameProject={onRenameProject}
             />
           ) : (
-            <p className="px-2 py-16 text-center text-sm text-muted">
+            <p className="px-2 py-16 text-center text-faint">
               {errors.length > 0 ? '目前的參數組合沒有解，請調整左側設定' : '產生中…'}
             </p>
           )}

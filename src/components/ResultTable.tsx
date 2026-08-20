@@ -21,24 +21,20 @@ interface ResultTableProps {
   maxPerProject: number
   minHours: number
   maxHours: number
-  /** 每次重新產生就換一個值，用來重播逐格淡入動畫。 */
-  revision: number
   onRenameProject: (index: number, name: string) => void
 }
 
 /**
- * 依工時佔單案上限的比例決定色塊深淺，讓整張表一眼就能看出忙碌分佈。
+ * 依工時佔單案上限的比例決定底色深淺，效果等同試算表的色階格式化。
  *
- * 色塊畫在格線內縮的 chip 上而不是整個 td，相鄰的高工時才不會糊成一整片。
+ * 底色直接上在儲存格而不是內縮的色塊，靠格線分隔相鄰的格子。
  */
 function heatStyle(value: number, cap: number): React.CSSProperties {
-  if (value === 0) {
-    return { color: 'rgb(var(--text-muted) / 0.45)' }
-  }
+  if (value === 0) return { color: 'rgb(var(--text-3))' }
   const ratio = Math.min(1, value / Math.max(1, cap))
   return {
-    backgroundColor: `rgb(var(--accent) / ${(0.14 + ratio * 0.44).toFixed(3)})`,
-    color: 'rgb(var(--text-strong))',
+    backgroundColor: `rgb(var(--accent) / ${(0.1 + ratio * 0.3).toFixed(3)})`,
+    color: 'rgb(var(--text))',
   }
 }
 
@@ -49,7 +45,6 @@ export function ResultTable({
   maxPerProject,
   minHours,
   maxHours,
-  revision,
   onRenameProject,
 }: ResultTableProps) {
   const [editing, setEditing] = useState<number | null>(null)
@@ -60,16 +55,14 @@ export function ResultTable({
   // 首欄與合計欄固定在兩側，整月 31 欄橫向捲動時仍看得到專案名稱與總時數。
   const stickyLeft = 'sticky left-0 z-10 sticky-edge-left'
   const stickyRight = 'sticky right-0 z-10 sticky-edge-right'
+  const numberCell = 'text-center font-mono'
 
   return (
-    <div className="scroll-slim overflow-x-auto rounded-xl border border-subtle">
-      <table className="w-full border-collapse text-sm" style={{ fontVariantNumeric: 'tabular-nums' }}>
+    <div className="scroll-slim overflow-x-auto border border-line">
+      <table className="grid-table w-full">
         <thead>
-          <tr className="surface-muted">
-            <th
-              scope="col"
-              className={`${stickyLeft} surface-muted min-w-[9rem] border-b border-r border-subtle px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-muted`}
-            >
+          <tr>
+            <th scope="col" className={`${stickyLeft} surface-alt min-w-[8.5rem] text-left text-[11px] uppercase tracking-wider text-faint`}>
               專案
             </th>
             {columns.map((column, index) => (
@@ -77,20 +70,13 @@ export function ResultTable({
                 key={index}
                 scope="col"
                 title={column.title}
-                className={`min-w-[3.25rem] border-b border-subtle px-2 py-2 text-center text-xs font-bold ${
-                  column.offDay ? 'text-muted opacity-60' : 'text-muted'
-                }`}
+                className={`min-w-[2.5rem] text-center text-[11px] ${column.offDay ? 'text-faint opacity-60' : 'text-body'}`}
               >
-                <span className="block leading-tight">{column.label}</span>
-                {column.sublabel && (
-                  <span className="block text-[10px] font-medium leading-tight opacity-70">{column.sublabel}</span>
-                )}
+                <span className="block font-mono leading-none">{column.label}</span>
+                {column.sublabel && <span className="mt-0.5 block text-[9px] font-normal leading-none opacity-70">{column.sublabel}</span>}
               </th>
             ))}
-            <th
-              scope="col"
-              className={`${stickyRight} surface-muted min-w-[4rem] border-b border-l border-subtle px-3 py-2 text-center text-xs font-bold uppercase tracking-wider text-muted`}
-            >
+            <th scope="col" className={`${stickyRight} surface-alt min-w-[3.25rem] text-center text-[11px] uppercase tracking-wider text-faint`}>
               合計
             </th>
           </tr>
@@ -99,14 +85,11 @@ export function ResultTable({
         <tbody>
           {matrix.map((row, project) => (
             <tr key={project}>
-              <th
-                scope="row"
-                className={`${stickyLeft} surface-card border-b border-r border-subtle px-3 py-1.5 text-left font-medium`}
-              >
+              <th scope="row" className={`${stickyLeft} text-left`}>
                 {editing === project ? (
                   <input
                     autoFocus
-                    className="field-input !text-left"
+                    className="input w-full !text-left font-sans"
                     defaultValue={projectNames[project]}
                     onBlur={(event) => {
                       onRenameProject(project, event.target.value)
@@ -121,7 +104,7 @@ export function ResultTable({
                   <button
                     type="button"
                     onClick={() => setEditing(project)}
-                    className="w-full truncate rounded px-1 py-1 text-left text-strong transition-colors hover:surface-inset"
+                    className="w-full truncate text-left text-strong hover:underline"
                     title="點一下可重新命名"
                   >
                     {projectNames[project]}
@@ -129,29 +112,17 @@ export function ResultTable({
                 )}
               </th>
 
-              {row.map((value, day) => (
-                <td
-                  // key 帶上 revision，重新產生時整格重新掛載，動畫才會重播。
-                  key={`${revision}-${day}`}
-                  className="cell-enter border-b border-subtle p-1"
-                  style={{ animationDelay: `${Math.min(320, (project * row.length + day) * 5)}ms` }}
-                >
-                  {columns[day]?.offDay ? (
-                    <span className="flex h-8 items-center justify-center rounded-md surface-inset text-xs font-medium text-muted opacity-50">
-                      休
-                    </span>
-                  ) : (
-                    <span
-                      className="flex h-8 items-center justify-center rounded-md font-semibold"
-                      style={heatStyle(value, maxPerProject)}
-                    >
-                      {value}
-                    </span>
-                  )}
-                </td>
-              ))}
+              {row.map((value, day) =>
+                columns[day]?.offDay ? (
+                  <td key={day} className="cell-off" />
+                ) : (
+                  <td key={day} className={numberCell} style={heatStyle(value, maxPerProject)}>
+                    {value}
+                  </td>
+                ),
+              )}
 
-              <td className={`${stickyRight} surface-card border-b border-l border-subtle px-3 py-1.5 text-center font-bold text-accent`}>
+              <td className={`${stickyRight} surface-panel ${numberCell} font-semibold text-strong`}>
                 {totalsByProject[project]}
               </td>
             </tr>
@@ -159,35 +130,24 @@ export function ResultTable({
         </tbody>
 
         <tfoot>
-          <tr className="surface-muted">
-            <th
-              scope="row"
-              className={`${stickyLeft} surface-muted border-r border-subtle px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-muted`}
-            >
-              每日合計
+          <tr>
+            <th scope="row" className={`${stickyLeft} surface-alt text-left text-[11px] uppercase tracking-wider text-faint`}>
+              合計
             </th>
             {totalsByDay.map((total, day) => {
-              if (columns[day]?.offDay) {
-                return (
-                  <td key={day} className="px-2 py-2.5 text-center text-muted opacity-50">
-                    —
-                  </td>
-                )
-              }
+              if (columns[day]?.offDay) return <td key={day} className="cell-off" />
               const outOfRange = total < minHours || total > maxHours
               return (
                 <td
                   key={day}
-                  className={`px-2 py-2.5 text-center font-bold ${outOfRange ? 'text-danger' : 'text-strong'}`}
+                  className={`${numberCell} ${outOfRange ? 'text-danger' : 'text-strong'}`}
                   title={outOfRange ? `超出設定範圍 ${minHours}–${maxHours}` : undefined}
                 >
                   {total}
                 </td>
               )
             })}
-            <td className={`${stickyRight} surface-muted border-l border-subtle px-3 py-2.5 text-center font-bold text-accent`}>
-              {grandTotal}
-            </td>
+            <td className={`${stickyRight} surface-alt ${numberCell} text-strong`}>{grandTotal}</td>
           </tr>
         </tfoot>
       </table>

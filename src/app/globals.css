@@ -3,50 +3,51 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'PingFang TC',
-    'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Noto Sans TC',
+    'Microsoft JhengHei', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', Menlo, Consolas, monospace;
 }
 
+/*
+ * 走試算表工具的路線：以灰階為主，只留一個克制的強調色給熱力著色與焦點框。
+ * 版面用 1px 邊框劃分，不用陰影與漸層。
+ */
 :root {
-  --surface-base: 250 250 252;
-  --surface-card: 255 255 255;
-  --surface-muted: 244 245 248;
-  --surface-inset: 238 240 245;
-  --border-subtle: 226 228 235;
-  --border-strong: 205 209 219;
-  --text-strong: 17 20 30;
-  --text-body: 62 68 84;
-  --text-muted: 128 134 150;
-  --accent: 99 91 255;
-  --accent-soft: 129 121 255;
-  --accent-contrast: 255 255 255;
-  --danger: 220 62 78;
-  --shadow-card: 0 1px 2px rgb(16 20 35 / 0.05), 0 12px 32px -12px rgb(16 20 35 / 0.12);
+  --bg: 246 247 249;
+  --panel: 255 255 255;
+  --panel-alt: 246 247 249;
+  --inset: 240 242 245;
+  --border: 214 218 225;
+  --border-strong: 184 190 201;
+  --text: 23 26 31;
+  --text-2: 82 89 100;
+  --text-3: 132 139 151;
+  --accent: 45 92 141;
+  --btn: 30 34 40;
+  --btn-text: 255 255 255;
+  --danger: 183 42 56;
+  /* 假日欄的底色，對比拉到一眼就能和工作日的 0 分開。 */
+  --offday: 201 206 214;
 }
 
 .dark {
-  --surface-base: 10 11 17;
-  --surface-card: 20 22 31;
-  --surface-muted: 27 30 41;
-  --surface-inset: 33 36 49;
-  --border-subtle: 40 44 58;
-  --border-strong: 58 63 80;
-  --text-strong: 240 242 248;
-  --text-body: 176 182 199;
-  --text-muted: 124 131 149;
-  --accent: 139 132 255;
-  --accent-soft: 116 108 245;
-  --accent-contrast: 12 13 20;
-  --danger: 255 118 132;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+  --bg: 13 15 18;
+  --panel: 22 25 30;
+  --panel-alt: 27 31 37;
+  --inset: 33 38 45;
+  --border: 44 50 58;
+  --border-strong: 68 76 88;
+  --text: 231 234 239;
+  --text-2: 163 171 183;
+  --text-3: 118 126 139;
+  --accent: 116 163 211;
+  --btn: 231 234 239;
+  --btn-text: 20 23 28;
+  --danger: 236 112 124;
+  --offday: 42 48 56;
 }
 
 @layer base {
-  * {
-    border-color: rgb(var(--border-subtle));
-  }
-
   html {
     color-scheme: light;
   }
@@ -56,238 +57,295 @@
   }
 
   body {
-    background-color: rgb(var(--surface-base));
-    color: rgb(var(--text-body));
+    background-color: rgb(var(--bg));
+    color: rgb(var(--text-2));
     font-family: var(--font-sans);
+    font-size: 13px;
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-  }
-
-  /* 背景的柔和光暈，讓大片留白不會太死板。 */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background:
-      radial-gradient(58rem 32rem at 12% -8%, rgb(var(--accent) / 0.14), transparent 60%),
-      radial-gradient(46rem 28rem at 96% 4%, rgb(var(--accent-soft) / 0.1), transparent 62%);
   }
 
   ::selection {
-    background-color: rgb(var(--accent) / 0.28);
+    background-color: rgb(var(--accent) / 0.25);
   }
 
   :focus-visible {
     outline: 2px solid rgb(var(--accent));
-    outline-offset: 2px;
+    outline-offset: 1px;
   }
 }
 
 @layer components {
-  .card {
-    background-color: rgb(var(--surface-card));
-    border: 1px solid rgb(var(--border-subtle));
-    border-radius: 1rem;
-    box-shadow: var(--shadow-card);
+  .panel {
+    background-color: rgb(var(--panel));
+    border: 1px solid rgb(var(--border));
+    border-radius: 6px;
+  }
+
+  /* 面板內用來分段的標題列，底色與表格表頭一致。 */
+  .panel-head {
+    background-color: rgb(var(--panel-alt));
+    border-bottom: 1px solid rgb(var(--border));
+    padding: 0.5rem 0.75rem;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgb(var(--text-3));
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    border-radius: 0.625rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    padding: 0.5rem 0.875rem;
+    gap: 0.375rem;
+    height: 1.75rem;
+    padding: 0 0.625rem;
+    border: 1px solid rgb(var(--border));
+    border-radius: 4px;
+    background-color: rgb(var(--panel));
+    color: rgb(var(--text-2));
+    font-size: 12px;
+    font-weight: 500;
     white-space: nowrap;
-    transition: background-color 150ms, color 150ms, border-color 150ms, transform 100ms;
+    transition: background-color 120ms, color 120ms, border-color 120ms;
   }
 
-  .btn:active:not(:disabled) {
-    transform: translateY(1px);
+  .btn:hover:not(:disabled) {
+    background-color: rgb(var(--inset));
+    color: rgb(var(--text));
+    border-color: rgb(var(--border-strong));
   }
 
   .btn:disabled {
-    opacity: 0.45;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
   .btn-primary {
-    background-color: rgb(var(--accent));
-    color: rgb(var(--accent-contrast));
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    background-color: rgb(var(--accent-soft));
-  }
-
-  .btn-ghost {
-    background-color: rgb(var(--surface-muted));
-    color: rgb(var(--text-body));
-    border: 1px solid rgb(var(--border-subtle));
-  }
-
-  .btn-ghost:hover:not(:disabled) {
-    background-color: rgb(var(--surface-inset));
-    color: rgb(var(--text-strong));
-  }
-
-  .field-input {
-    width: 100%;
-    background-color: rgb(var(--surface-inset));
-    border: 1px solid rgb(var(--border-subtle));
-    border-radius: 0.5rem;
-    color: rgb(var(--text-strong));
-    font-variant-numeric: tabular-nums;
-    padding: 0.375rem 0.5rem;
-    text-align: center;
-    font-size: 0.875rem;
+    background-color: rgb(var(--btn));
+    border-color: rgb(var(--btn));
+    color: rgb(var(--btn-text));
     font-weight: 600;
   }
 
-  /* select 沿用同一組欄位樣式，並換掉各平台差異很大的原生箭頭。 */
-  select.field-input {
-    -webkit-appearance: none;
-    appearance: none;
-    cursor: pointer;
-    padding-right: 1.5rem;
-    background-image: linear-gradient(45deg, transparent 50%, rgb(var(--text-muted)) 50%),
-      linear-gradient(135deg, rgb(var(--text-muted)) 50%, transparent 50%);
-    background-position: calc(100% - 0.85rem) 55%, calc(100% - 0.55rem) 55%;
-    background-size: 0.3rem 0.3rem, 0.3rem 0.3rem;
-    background-repeat: no-repeat;
+  .btn-primary:hover:not(:disabled) {
+    background-color: rgb(var(--btn) / 0.85);
+    border-color: rgb(var(--btn) / 0.85);
+    color: rgb(var(--btn-text));
   }
 
-  /* 隱藏數字輸入框的上下箭頭，讓欄位在窄欄寬下仍然好按。 */
-  .field-input[type='number']::-webkit-outer-spin-button,
-  .field-input[type='number']::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  /* 分頁列做成連在一起的分段控制項，而不是彼此分離的膠囊。 */
+  .segment {
+    display: inline-flex;
+    border: 1px solid rgb(var(--border));
+    border-radius: 4px;
+    overflow: hidden;
   }
 
-  .field-input[type='number'] {
-    -moz-appearance: textfield;
-    appearance: textfield;
+  .segment > button {
+    height: 1.75rem;
+    padding: 0 0.75rem;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgb(var(--text-3));
+    background-color: rgb(var(--panel));
+    border-right: 1px solid rgb(var(--border));
+    transition: background-color 120ms, color 120ms;
   }
 
-  .field-input:focus {
+  .segment > button:last-child {
+    border-right: 0;
+  }
+
+  .segment > button:hover {
+    color: rgb(var(--text));
+    background-color: rgb(var(--inset));
+  }
+
+  .segment > button[aria-current='page'] {
+    background-color: rgb(var(--btn));
+    color: rgb(var(--btn-text));
+    font-weight: 600;
+  }
+
+  .input {
+    height: 1.625rem;
+    background-color: rgb(var(--panel));
+    border: 1px solid rgb(var(--border));
+    border-radius: 4px;
+    color: rgb(var(--text));
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0 0.375rem;
+    text-align: right;
+  }
+
+  .input:focus {
     border-color: rgb(var(--accent));
     outline: none;
   }
 
-  /* 統一 range 在各瀏覽器的外觀。 */
+  /* 隱藏數字輸入框的上下箭頭，窄欄寬下才不會擠掉數字。 */
+  .input[type='number']::-webkit-outer-spin-button,
+  .input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  select.input {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    text-align: left;
+    padding-right: 1.25rem;
+    background-image: linear-gradient(45deg, transparent 50%, rgb(var(--text-3)) 50%),
+      linear-gradient(135deg, rgb(var(--text-3)) 50%, transparent 50%);
+    background-position: calc(100% - 0.7rem) 55%, calc(100% - 0.45rem) 55%;
+    background-size: 0.28rem 0.28rem, 0.28rem 0.28rem;
+    background-repeat: no-repeat;
+  }
+
+  /* 細滑桿，只作為輔助調整用，視覺份量低於數字輸入框。 */
   .slider {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 1.25rem;
+    height: 0.75rem;
     background: transparent;
     cursor: pointer;
   }
 
   .slider::-webkit-slider-runnable-track {
-    height: 0.375rem;
-    border-radius: 999px;
+    height: 2px;
     background: linear-gradient(
       to right,
-      rgb(var(--accent)) var(--fill, 0%),
-      rgb(var(--surface-inset)) var(--fill, 0%)
+      rgb(var(--border-strong)) var(--fill, 0%),
+      rgb(var(--border)) var(--fill, 0%)
     );
   }
 
   .slider::-moz-range-track {
-    height: 0.375rem;
-    border-radius: 999px;
+    height: 2px;
     background: linear-gradient(
       to right,
-      rgb(var(--accent)) var(--fill, 0%),
-      rgb(var(--surface-inset)) var(--fill, 0%)
+      rgb(var(--border-strong)) var(--fill, 0%),
+      rgb(var(--border)) var(--fill, 0%)
     );
   }
 
   .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    height: 1rem;
-    width: 1rem;
-    margin-top: -0.3125rem;
-    border-radius: 999px;
-    background: rgb(var(--surface-card));
-    border: 2px solid rgb(var(--accent));
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
-    transition: transform 120ms;
+    height: 0.625rem;
+    width: 0.625rem;
+    margin-top: -0.28rem;
+    border-radius: 2px;
+    background: rgb(var(--panel));
+    border: 1px solid rgb(var(--border-strong));
   }
 
   .slider::-moz-range-thumb {
-    height: 1rem;
-    width: 1rem;
-    border-radius: 999px;
-    background: rgb(var(--surface-card));
-    border: 2px solid rgb(var(--accent));
-    box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+    height: 0.625rem;
+    width: 0.625rem;
+    border-radius: 2px;
+    background: rgb(var(--panel));
+    border: 1px solid rgb(var(--border-strong));
   }
 
   .slider:hover::-webkit-slider-thumb {
-    transform: scale(1.15);
+    background: rgb(var(--inset));
+  }
+
+  /* 表格走試算表格線：每一格都有邊框，靠格線而不是留白來分隔資料。 */
+  .grid-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .grid-table th,
+  .grid-table td {
+    border-right: 1px solid rgb(var(--border));
+    border-bottom: 1px solid rgb(var(--border));
+    height: 1.75rem;
+    padding: 0 0.375rem;
+  }
+
+  .grid-table thead th,
+  .grid-table tfoot th,
+  .grid-table tfoot td {
+    background-color: rgb(var(--panel-alt));
+    font-weight: 600;
+  }
+
+  .grid-table tbody th {
+    background-color: rgb(var(--panel));
+    font-weight: 400;
+  }
+
+  .grid-table tr > *:last-child {
+    border-right: 0;
+  }
+
+  .grid-table tfoot > tr > * {
+    border-bottom: 0;
   }
 }
 
 @layer utilities {
-  .surface-card {
-    background-color: rgb(var(--surface-card));
+  .cell-off {
+    background-color: rgb(var(--offday));
   }
 
-  .surface-muted {
-    background-color: rgb(var(--surface-muted));
+  .surface-panel {
+    background-color: rgb(var(--panel));
+  }
+
+  .surface-alt {
+    background-color: rgb(var(--panel-alt));
   }
 
   .surface-inset {
-    background-color: rgb(var(--surface-inset));
+    background-color: rgb(var(--inset));
   }
 
   .text-strong {
-    color: rgb(var(--text-strong));
+    color: rgb(var(--text));
   }
 
   .text-body {
-    color: rgb(var(--text-body));
+    color: rgb(var(--text-2));
   }
 
-  .text-muted {
-    color: rgb(var(--text-muted));
-  }
-
-  .text-accent {
-    color: rgb(var(--accent));
+  .text-faint {
+    color: rgb(var(--text-3));
   }
 
   .text-danger {
     color: rgb(var(--danger));
   }
 
-  .border-subtle {
-    border-color: rgb(var(--border-subtle));
+  .border-line {
+    border-color: rgb(var(--border));
   }
 
-  .border-strong {
-    border-color: rgb(var(--border-strong));
+  .divide-line > * + * {
+    border-top: 1px solid rgb(var(--border));
   }
 
   /* 黏性欄的內側陰影，讓捲到下方的內容看起來是被刻意遮住而不是破圖。 */
   .sticky-edge-left {
-    box-shadow: 6px 0 10px -8px rgb(0 0 0 / 0.45);
+    box-shadow: 4px 0 6px -5px rgb(0 0 0 / 0.4);
   }
 
   .sticky-edge-right {
-    box-shadow: -6px 0 10px -8px rgb(0 0 0 / 0.45);
-  }
-
-  /* 產生結果時逐格淡入，讓「重新產生」有明確的視覺回饋。 */
-  .cell-enter {
-    animation: cell-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    box-shadow: -4px 0 6px -5px rgb(0 0 0 / 0.4);
   }
 
   .scroll-slim {
@@ -302,7 +360,7 @@
 
   .scroll-slim::-webkit-scrollbar-thumb {
     background-color: rgb(var(--border-strong));
-    border-radius: 999px;
+    border-radius: 0;
   }
 
   .scroll-slim::-webkit-scrollbar-track {
@@ -310,22 +368,7 @@
   }
 }
 
-@keyframes cell-enter {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .cell-enter {
-    animation: none;
-  }
-
   * {
     transition-duration: 1ms !important;
   }

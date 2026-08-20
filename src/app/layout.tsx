@@ -3,13 +3,13 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: '隨機工時分配表',
-  description: '為多個專案產生符合每日工時上下限的隨機工時分配表，可下載 CSV / Excel。',
+  description: '為多個專案產生符合每日工時上下限的隨機工時分配表，可複製貼進試算表或下載 CSV / Excel。',
 }
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fafafc' },
-    { media: '(prefers-color-scheme: dark)', color: '#0a0b11' },
+    { media: '(prefers-color-scheme: light)', color: '#f6f7f9' },
+    { media: '(prefers-color-scheme: dark)', color: '#0d0f12' },
   ],
 }
 
@@ -30,12 +30,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh-Hant" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>{children}</body>

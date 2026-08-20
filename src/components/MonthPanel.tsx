@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { fetchMonth, holidayNames, type MonthCalendar } from '@/lib/calendar'
-import { download, toCsv, toXlsx, type SheetData } from '@/lib/export'
+import { copyText, download, toCsv, toTsv, toXlsx, type SheetData } from '@/lib/export'
 import { generate, validate, type HoursMatrix, type ValidationError } from '@/lib/generator'
 import {
   DEFAULT_MONTH_OPTIONS,
@@ -36,7 +36,6 @@ export function MonthPanel({ projectNames, onRenameProject, onResetNames, notify
   const [calendar, setCalendar] = useState<MonthCalendar | null>(null)
   const [loading, setLoading] = useState(true)
   const [matrix, setMatrix] = useState<HoursMatrix | null>(null)
-  const [revision, setRevision] = useState(0)
 
   // 初次載入：網址參數優先於 localStorage，兩者都沒有就用當月配一顆新種子。
   useEffect(() => {
@@ -91,7 +90,6 @@ export function MonthPanel({ projectNames, onRenameProject, onResetNames, notify
         return index === undefined ? 0 : row[index]
       })),
     )
-    setRevision((value) => value + 1)
   }, [ready, calendar, workdays, options, errors])
 
   const names = projectNames(options.numProjects)
@@ -115,6 +113,21 @@ export function MonthPanel({ projectNames, onRenameProject, onResetNames, notify
     ),
     matrix: matrix ?? [],
   })
+
+  /**
+   * 複製整個月份的數字區塊。
+   *
+   * 欄數等於當月天數，假日欄留空，貼進以整月為欄位的試算表時位置會完全對齊。
+   */
+  const handleCopy = async () => {
+    if (!matrix) return
+    const ok = await copyText(toTsv(matrix, columns.map((column) => Boolean(column.offDay))))
+    notify(
+      ok
+        ? `已複製 ${matrix.length} × ${columns.length} 的數字區塊，假日欄留空，可直接貼進試算表`
+        : '複製失敗，請改用 CSV 或 Excel 下載',
+    )
+  }
 
   const handleReset = () => {
     onResetNames()
@@ -140,8 +153,8 @@ export function MonthPanel({ projectNames, onRenameProject, onResetNames, notify
   const showTable = Boolean(matrix && calendar && errors.length === 0)
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
-      <aside className="lg:sticky lg:top-6 lg:self-start">
+    <div className="grid gap-3 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <aside className="lg:sticky lg:top-14 lg:self-start">
         <MonthControls
           options={options}
           errors={errors}
@@ -156,19 +169,20 @@ export function MonthPanel({ projectNames, onRenameProject, onResetNames, notify
       {/* min-w-0 讓 grid 項目可以縮到比內容窄，寬表格才會在容器內捲動而不是撐開整頁。 */}
       <main className="min-w-0">
         <ResultCard
-          title={`${options.year} 年 ${options.month} 月工時分配`}
-          subtitle={
+          title={`${options.year}-${String(options.month).padStart(2, '0')}`}
+          note={
             holidays.length > 0
-              ? `本月國定假日：${holidays.join('、')} · 點專案名稱可改名`
-              : '假日不排工時 · 點專案名稱可改名'
+              ? `本月國定假日：${holidays.join('、')} · 點專案名稱可改名 · 假日欄不排工時`
+              : '點專案名稱可改名 · 假日欄不排工時'
           }
           stats={[
             { label: '工作日', value: workdays.length },
             { label: '專案', value: options.numProjects },
             { label: '總工時', value: grandTotal },
-            { label: '平均每日', value: workdays.length > 0 ? (grandTotal / workdays.length).toFixed(1) : '0.0' },
+            { label: '平均', value: workdays.length > 0 ? (grandTotal / workdays.length).toFixed(1) : '0.0' },
           ]}
           disabled={!showTable}
+          onCopy={handleCopy}
           onShare={handleShare}
           onCsv={() => download(`${filename}.csv`, toCsv(sheet()), 'text/csv;charset=utf-8')}
           onXlsx={() =>
@@ -187,11 +201,10 @@ export function MonthPanel({ projectNames, onRenameProject, onResetNames, notify
               maxPerProject={options.maxPerProject}
               minHours={options.minHours}
               maxHours={options.maxHours}
-              revision={revision}
               onRenameProject={onRenameProject}
             />
           ) : (
-            <p className="px-2 py-16 text-center text-sm text-muted">
+            <p className="px-2 py-16 text-center text-faint">
               {errors.length > 0 ? '目前的參數組合沒有解，請調整左側設定' : loading ? '讀取行事曆中…' : '這個月份沒有工作日'}
             </p>
           )}

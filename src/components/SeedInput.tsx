@@ -13,16 +13,13 @@ export function SeedInput({ seed, onSeedChange }: { seed: number; onSeedChange: 
   const [draft, setDraft] = useState<string | null>(null)
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <label htmlFor="seed" className="text-sm font-semibold text-strong">
-          亂數種子
-        </label>
-        <span className="text-[11px] text-muted">相同種子 = 相同結果</span>
-      </div>
+    <div className="flex items-center justify-between gap-2">
+      <label htmlFor="seed" className="text-strong" title="相同種子加相同參數，必定產生同一張表">
+        亂數種子
+      </label>
       <input
         id="seed"
-        className="field-input !text-left font-mono uppercase tracking-widest"
+        className="input w-[7.5rem] tracking-wider"
         value={draft ?? seedToString(seed)}
         spellCheck={false}
         maxLength={8}
@@ -35,7 +32,6 @@ export function SeedInput({ seed, onSeedChange }: { seed: number; onSeedChange: 
         onBlur={() => setDraft(null)}
         aria-label="亂數種子"
       />
-      <p className="text-[11px] text-muted">貼上別人的種子就能重現同一張表。</p>
     </div>
   )
 }

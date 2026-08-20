@@ -20,7 +20,7 @@ interface MonthControlsProps {
 
 /** 把年月往前或往後移動指定的月數，跨年時自動進位。 */
 function shiftMonth(year: number, month: number, delta: number): { year: number; month: number } {
-  const index = (year * 12 + (month - 1) + delta)
+  const index = year * 12 + (month - 1) + delta
   return { year: Math.floor(index / 12), month: (index % 12) + 1 }
 }
 
@@ -38,59 +38,52 @@ export function MonthControls({ options, errors, calendar, loading, onChange, on
   }
 
   return (
-    <div className="card space-y-6 p-5">
-      <div className="space-y-1">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-muted">月份設定</h2>
-        <p className="text-xs text-muted">依台灣行事曆的工作日排工時。</p>
-      </div>
+    <div className="panel overflow-hidden">
+      <div className="panel-head">月份</div>
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => step(-1)} className="btn btn-ghost h-9 w-9 !px-0" aria-label="上個月">
+      <div className="space-y-2 px-3 py-3">
+        <div className="flex items-center gap-1">
+          <button type="button" onClick={() => step(-1)} className="btn w-6 !px-0" aria-label="上個月">
             ‹
           </button>
-
           <select
-            className="field-input flex-1 !text-center"
+            className="input flex-1"
             value={options.year}
             onChange={(event) => onChange({ year: Number(event.target.value) })}
             aria-label="年份"
           >
             {years.map((year) => (
               <option key={year} value={year}>
-                {year} 年
+                {year}
               </option>
             ))}
           </select>
-
           <select
-            className="field-input w-20 !text-center"
+            className="input w-16"
             value={options.month}
             onChange={(event) => onChange({ month: Number(event.target.value) })}
             aria-label="月份"
           >
             {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => (
               <option key={month} value={month}>
-                {month} 月
+                {String(month).padStart(2, '0')} 月
               </option>
             ))}
           </select>
-
-          <button type="button" onClick={() => step(1)} className="btn btn-ghost h-9 w-9 !px-0" aria-label="下個月">
+          <button type="button" onClick={() => step(1)} className="btn w-6 !px-0" aria-label="下個月">
             ›
           </button>
         </div>
 
-        <p className="text-[11px] text-muted">
-          {loading ? '讀取行事曆中…' : `本月 ${workdays} 個工作日`}
-          {calendar?.source === 'fallback' && ' · 無法取得行事曆，已改用週一至週五推算'}
+        <p className="text-[11px] text-faint">
+          {loading ? '讀取行事曆中…' : `${workdays} 個工作日`}
+          {calendar?.source === 'fallback' && ' · 行事曆讀取失敗，已改用週一至週五推算'}
         </p>
       </div>
 
-      <div className="border-t border-subtle pt-5">
+      <div className="border-t border-line px-3 py-3">
         <NumberField
           label="專案數量"
-          hint={`表格列數 · ${LIMITS.numProjects.min}–${LIMITS.numProjects.max}`}
           value={options.numProjects}
           min={LIMITS.numProjects.min}
           max={LIMITS.numProjects.max}
@@ -106,7 +99,7 @@ export function MonthControls({ options, errors, calendar, loading, onChange, on
         onChange={onChange}
       />
 
-      <div className="border-t border-subtle pt-5">
+      <div className="border-t border-line px-3 py-3">
         <SeedInput seed={options.seed} onSeedChange={(seed) => onChange({ seed })} />
       </div>
 

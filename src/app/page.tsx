@@ -37,47 +37,47 @@ export default function Page() {
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[110rem] px-4 py-6 sm:px-6 lg:px-8">
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-lg font-bold"
-            style={{ backgroundColor: 'rgb(var(--accent))', color: 'rgb(var(--accent-contrast))' }}
-            aria-hidden
-          >
-            ⏱
-          </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-strong">隨機工時分配表</h1>
-            <p className="text-xs text-muted">依每日工時上下限，隨機把時數分配給各專案</p>
-          </div>
-        </div>
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-20 border-b border-line surface-panel">
+        <div className="mx-auto flex max-w-[110rem] flex-wrap items-center justify-between gap-3 px-3 py-2">
+          <h1 className="font-semibold text-strong">隨機工時分配</h1>
 
-        <div className="flex items-center gap-3">
-          <nav className="flex gap-1 rounded-xl border border-subtle surface-muted p-1" aria-label="模式切換">
-            {TABS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => selectTab(item.id)}
-                title={item.hint}
-                aria-current={tab === item.id ? 'page' : undefined}
-                className={`btn ${tab === item.id ? 'btn-primary' : '!bg-transparent text-muted hover:text-strong'}`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </nav>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <div className="segment" role="tablist" aria-label="模式切換">
+              {TABS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="tab"
+                  id={`tab-${item.id}`}
+                  aria-controls={`panel-${item.id}`}
+                  aria-selected={tab === item.id}
+                  aria-current={tab === item.id ? 'page' : undefined}
+                  onClick={() => selectTab(item.id)}
+                  title={item.hint}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
-      {tab === 'month' ? <MonthPanel {...shared} /> : <QuickPanel {...shared} />}
+      <div
+        className="mx-auto max-w-[110rem] px-3 py-3"
+        role="tabpanel"
+        id={`panel-${tab}`}
+        aria-labelledby={`tab-${tab}`}
+      >
+        {tab === 'month' ? <MonthPanel {...shared} /> : <QuickPanel {...shared} />}
+      </div>
 
       {message && (
         <div
           role="status"
-          className="card fixed bottom-6 left-1/2 z-50 -translate-x-1/2 px-4 py-2.5 text-sm font-medium text-strong"
+          className="panel fixed bottom-4 left-1/2 z-50 -translate-x-1/2 px-3 py-2 text-strong shadow-lg"
         >
           {message}
         </div>

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { toCsv, toXlsx, type SheetData } from '../src/lib/export'
+import { toCsv, toTsv, toXlsx, type SheetData } from '../src/lib/export'
 import { createZip, textToBytes } from '../src/lib/zip'
 
 const data: SheetData = {
@@ -62,4 +62,31 @@ test('XLSX 逸出 XML 特殊字元', () => {
   const text = Buffer.from(toXlsx({ ...data, rowLabels: ['A & B', '<C>'] })).toString('utf8')
   assert.ok(text.includes('A &amp; B'))
   assert.ok(text.includes('&lt;C&gt;'))
+})
+
+test('TSV 只輸出數字格，用 tab 分隔', () => {
+  assert.equal(toTsv(data.matrix), '3\t1\n2\t3')
+})
+
+test('TSV 的假日欄留空，工作日補 0', () => {
+  const matrix = [
+    [0, 3, 0],
+    [0, 2, 0],
+  ]
+  // 第一欄與第三欄是假日。
+  const rows = toTsv(matrix, [true, false, true]).split('\n')
+  assert.deepEqual(rows, ['\t3\t', '\t2\t'])
+})
+
+test('TSV 欄數固定，假日不會讓區塊錯位', () => {
+  const matrix = [
+    [0, 1, 2, 0],
+    [1, 0, 0, 3],
+  ]
+  const rows = toTsv(matrix, [true, false, false, true]).split('\n')
+  assert.equal(rows.every((row) => row.split('\t').length === 4), true)
+})
+
+test('沒有指定假日時每一格都輸出數字', () => {
+  assert.equal(toTsv([[0, 1]]), '0\t1')
 })

@@ -28,7 +28,21 @@ export const DEFAULT_OPTIONS: GeneratorOptions = {
   seed: 0,
 }
 
-/** 月份模式的預設值；年月留給呼叫端填入當下的日期。 */
+/**
+ * 預設要排的月份：下個月。
+ *
+ * 排班多半是提前規劃下一個月，開起來就停在當月的話每次都要手動往後撥一格。
+ * 12 月時自動跨到隔年 1 月；超出行事曆資料範圍時夾回可選的年份。
+ */
+export function defaultMonth(now: Date): { year: number; month: number } {
+  const target = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+  return {
+    year: Math.min(CALENDAR_YEARS.max, Math.max(CALENDAR_YEARS.min, target.getFullYear())),
+    month: target.getMonth() + 1,
+  }
+}
+
+/** 月份模式的預設值；年月留給呼叫端填入。 */
 export const DEFAULT_MONTH_OPTIONS: Omit<MonthOptions, 'year' | 'month'> = {
   numProjects: 10,
   minHours: 5,
@@ -164,7 +178,15 @@ export function loadStoredMonth(fallbackYear: number, fallbackMonth: number): Mo
 }
 
 export function saveStoredMonth(options: MonthOptions): void {
-  write(MONTH_KEY, options)
+  // 年月刻意不存：那是隨時間變動的選擇，不是偏好設定。
+  // 存了的話每次開啟都會停在上次看的月份，蓋掉「下個月」這個預設。
+  write(MONTH_KEY, {
+    numProjects: options.numProjects,
+    minHours: options.minHours,
+    maxHours: options.maxHours,
+    maxPerProject: options.maxPerProject,
+    seed: options.seed,
+  })
 }
 
 export function loadStoredTab(): TabId | null {

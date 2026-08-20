@@ -6,6 +6,7 @@ import { copyText, download, toCsv, toTsv, toXlsx, type SheetData } from '@/lib/
 import { generate, validate, type HoursMatrix, type ValidationError } from '@/lib/generator'
 import {
   DEFAULT_MONTH_OPTIONS,
+  defaultMonth,
   loadStoredMonth,
   monthFromQuery,
   monthToQuery,
@@ -25,8 +26,7 @@ interface MonthPanelProps {
 }
 
 function defaults(): MonthOptions {
-  const now = new Date()
-  return { ...DEFAULT_MONTH_OPTIONS, year: now.getFullYear(), month: now.getMonth() + 1 }
+  return { ...DEFAULT_MONTH_OPTIONS, ...defaultMonth(new Date()) }
 }
 
 /** 月份模式：只在台灣行事曆的工作日排工時，假日留白。 */
